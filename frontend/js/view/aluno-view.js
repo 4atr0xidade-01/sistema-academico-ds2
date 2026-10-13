@@ -1,19 +1,17 @@
 
 /*
- * VIEW DE ALUNOS - VERSÃO COM DOM
+ * VIEW DE ALUNOS - VERSÃO 0.3
  *
- * Localiza os elementos HTML,
- * lê os dados do formulário,
- * apresenta mensagens, tabela e JSON.
+ * A View continua responsável pelo DOM e pelos eventos.
  */
-
 const AlunoView = {
 
     elementos: {},
 
-    // Localiza os elementos da página
+    /*
+     * Localiza os elementos da página.
+     */
     inicializar() {
-
         AlunoView.elementos.formulario =
             document.getElementById("form-aluno");
 
@@ -43,15 +41,21 @@ const AlunoView = {
 
         AlunoView.elementos.saidaJson =
             document.getElementById("saida-json");
+
+        /*
+         * Nova referência da versão 0.3.
+         */
+        AlunoView.elementos.botaoLimpar =
+            document.getElementById("btn-limpar-dados");
     },
 
-    // Configura o evento submit
+    /*
+     * Configura o evento submit.
+     */
     configurarFormulario(aoEnviar) {
-
         AlunoView.elementos.formulario.addEventListener(
             "submit",
             function (evento) {
-
                 evento.preventDefault();
 
                 const dados = AlunoView.lerDados();
@@ -61,9 +65,22 @@ const AlunoView = {
         );
     },
 
-    // Lê os valores dos campos
-    lerDados() {
+    /*
+     * Configura o evento click do botão Limpar dados.
+     */
+    configurarBotaoLimpar(aoLimpar) {
+        AlunoView.elementos.botaoLimpar.addEventListener(
+            "click",
+            function () {
+                aoLimpar();
+            }
+        );
+    },
 
+    /*
+     * Lê os valores do formulário.
+     */
+    lerDados() {
         return {
             ra: AlunoView.elementos.ra.value,
             nome: AlunoView.elementos.nome.value,
@@ -73,68 +90,67 @@ const AlunoView = {
         };
     },
 
-    // Mensagem de sucesso
+    /*
+     * Solicita uma confirmação antes de remover os dados.
+     */
+    confirmarLimpeza() {
+        return confirm(
+            "Deseja remover todos os alunos cadastrados?"
+        );
+    },
+
+    /*
+     * Apresenta uma mensagem de sucesso.
+     */
     exibirSucesso(mensagem) {
-
-        AlunoView.elementos.mensagem.textContent =
-            mensagem;
-
+        AlunoView.elementos.mensagem.textContent = mensagem;
         AlunoView.elementos.mensagem.className =
             "mensagem sucesso";
     },
 
-    // Mensagem de erro
+    /*
+     * Apresenta uma mensagem de erro.
+     */
     exibirErro(mensagem) {
-
-        AlunoView.elementos.mensagem.textContent =
-            mensagem;
-
+        AlunoView.elementos.mensagem.textContent = mensagem;
         AlunoView.elementos.mensagem.className =
             "mensagem erro";
     },
 
-    // Limpa os campos
+    /*
+     * Limpa o formulário e devolve o foco ao RA.
+     */
     limparFormulario() {
-
         AlunoView.elementos.formulario.reset();
-
         AlunoView.elementos.ra.focus();
     },
 
-    // Apresenta a lista na tabela
+    /*
+     * Reconstrói a tabela de alunos.
+     */
     exibirLista(alunos) {
+        const corpoTabela = AlunoView.elementos.corpoTabela;
 
-        const corpoTabela =
-            AlunoView.elementos.corpoTabela;
-
-        // Remove as linhas anteriores
         corpoTabela.textContent = "";
 
-        // Atualiza o contador
         AlunoView.elementos.totalAlunos.textContent =
             `Total: ${alunos.length}`;
 
-        // Verifica se existem alunos
         if (alunos.length === 0) {
-
             const linha = document.createElement("tr");
             const celula = document.createElement("td");
 
             celula.colSpan = 7;
-
             celula.textContent =
                 "Nenhum aluno foi cadastrado.";
 
             linha.appendChild(celula);
-
             corpoTabela.appendChild(linha);
 
             return;
         }
 
-        // Cria as linhas dos alunos
         alunos.forEach(function (aluno) {
-
             const linha = document.createElement("tr");
 
             const valores = [
@@ -147,13 +163,10 @@ const AlunoView = {
                 aluno.ativo ? "Ativo" : "Inativo"
             ];
 
-            // Cria cada célula
             valores.forEach(function (valor) {
-
                 const celula = document.createElement("td");
 
                 celula.textContent = valor;
-
                 linha.appendChild(celula);
             });
 
@@ -161,10 +174,10 @@ const AlunoView = {
         });
     },
 
-    // Apresenta o JSON
+    /*
+     * Apresenta a representação JSON.
+     */
     exibirJson(textoJson) {
-
-        AlunoView.elementos.saidaJson.textContent =
-            textoJson;
+        AlunoView.elementos.saidaJson.textContent = textoJson;
     }
 };

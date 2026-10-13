@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8,7 +7,10 @@
 
     <link rel="stylesheet" href="./css/estilo.css">
 
+    <!-- Ordem dos scripts: Model, Service, View e Controller. -->
     <script src="./js/model/aluno-model.js" defer></script>
+    <!-- O Service coordena o Model e a persistência em localStorage. -->
+    <script src="./js/service/aluno-service.js" defer></script>
     <script src="./js/view/aluno-view.js" defer></script>
     <script src="./js/controller/aluno-controller.js" defer></script>
 </head>
@@ -16,89 +18,60 @@
     <header class="cabecalho">
         <div class="container">
             <h1>Sistema Acadêmico DS II</h1>
-            <p>Versão 0.2 - cadastro de alunos com DOM e eventos</p>
+            <p>Versão 0.3 - persistência local e camada Service</p>
         </div>
     </header>
 
     <main class="container">
-        <!-- Cadastro de alunos -->
+        <!-- Formulário de cadastro -->
         <section class="cartao">
             <h2>Cadastro de aluno</h2>
             <p>Preencha os campos abaixo para cadastrar um aluno.</p>
 
+            <!-- A validação das regras continuará no Model. -->
             <form id="form-aluno" novalidate>
                 <div class="grade-formulario">
-
                     <div class="campo">
                         <label for="ra">RA</label>
-                        <input
-                            type="text"
-                            id="ra"
-                            name="ra"
-                            placeholder="Exemplo: 2026001"
-                            required
-                        >
+                        <input type="text" id="ra" name="ra" placeholder="Exemplo: 2026001" required>
                     </div>
 
                     <div class="campo">
                         <label for="nome">Nome</label>
-                        <input
-                            type="text"
-                            id="nome"
-                            name="nome"
-                            placeholder="Nome completo"
-                            required
-                        >
+                        <input type="text" id="nome" name="nome" placeholder="Nome completo" required>
                     </div>
 
                     <div class="campo">
                         <label for="email">E-mail</label>
-                        <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            placeholder="aluno@email.com"
-                            required
-                        >
+                        <input type="email" id="email" name="email" placeholder="aluno@email.com" required>
                     </div>
 
                     <div class="campo">
                         <label for="curso">Curso</label>
-                        <input
-                            type="text"
-                            id="curso"
-                            name="curso"
-                            placeholder="Exemplo: DSM"
-                            required
-                        >
+                        <input type="text" id="curso" name="curso" placeholder="Exemplo: DSM" required>
                     </div>
 
                     <div class="campo">
                         <label for="turma">Turma</label>
-                        <input
-                            type="text"
-                            id="turma"
-                            name="turma"
-                            placeholder="Exemplo: 2 DSM"
-                            required
-                        >
+                        <input type="text" id="turma" name="turma" placeholder="Exemplo: 2 DSM" required>
                     </div>
                 </div>
 
-                <button type="submit">
-                    Cadastrar aluno
-                </button>
+                <!-- Ações do formulário: cadastrar e limpar os dados armazenados. -->
+                <div class="acoes-formulario">
+                    <button type="submit">Cadastrar aluno</button>
+                    <button
+                        type="button"
+                        id="btn-limpar-dados"
+                        class="botao-secundario"
+                    >Limpar dados</button>
+                </div>
             </form>
 
-            <div
-                id="mensagem"
-                class="mensagem"
-                role="status"
-                aria-live="polite">
-            </div>
+            <div id="mensagem" class="mensagem" role="status" aria-live="polite"></div>
         </section>
 
-        <!-- Lista de alunos -->
+        <!-- Tabela de alunos cadastrados -->
         <section class="cartao">
             <div class="titulo-secao">
                 <h2>Alunos cadastrados</h2>
@@ -118,14 +91,12 @@
                             <th>Situação</th>
                         </tr>
                     </thead>
-
-                    <tbody id="corpo-tabela-alunos">
-                    </tbody>
+                    <tbody id="corpo-tabela-alunos"></tbody>
                 </table>
             </div>
         </section>
 
-        <!-- Representação JSON -->
+        <!-- Representação JSON da lista -->
         <section class="cartao">
             <h2>Representação em JSON</h2>
             <p>A lista abaixo é atualizada após cada cadastro.</p>

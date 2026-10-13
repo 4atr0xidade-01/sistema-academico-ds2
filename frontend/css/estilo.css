@@ -1,9 +1,9 @@
-
-/* Configuração geral */
+/* Faz padding e borda integrarem o tamanho dos elementos. */
 * {
     box-sizing: border-box;
 }
 
+/* Configurações gerais da página. */
 body {
     margin: 0;
     min-height: 100vh;
@@ -12,13 +12,13 @@ body {
     color: #1f2937;
 }
 
-/* Container */
+/* Centraliza e limita a largura do conteúdo. */
 .container {
     width: min(92%, 1100px);
     margin: 0 auto;
 }
 
-/* Cabeçalho */
+/* Cabeçalho da aplicação. */
 .cabecalho {
     padding: 28px 0;
     background-color: #0f3d66;
@@ -33,12 +33,12 @@ body {
     margin: 8px 0 0;
 }
 
-/* Conteúdo principal */
+/* Espaçamento do conteúdo principal. */
 main.container {
     padding: 32px 0;
 }
 
-/* Cartões */
+/* Cada cartão é uma seção da interface. */
 .cartao {
     margin-bottom: 24px;
     padding: 24px;
@@ -52,17 +52,15 @@ main.container {
     color: #0f3d66;
 }
 
-/* Formulário */
+/* Formulário com colunas flexíveis. */
 .grade-formulario {
     display: grid;
-    grid-template-columns: repeat(
-        auto-fit,
-        minmax(220px, 1fr)
-    );
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 16px;
     margin-bottom: 20px;
 }
 
+/* Organiza cada label e input verticalmente. */
 .campo {
     display: flex;
     flex-direction: column;
@@ -86,7 +84,7 @@ main.container {
     outline: 3px solid rgba(15, 61, 102, 0.15);
 }
 
-/* Botões */
+/* Botão principal do formulário. */
 button {
     padding: 12px 20px;
     border: 0;
@@ -102,7 +100,7 @@ button:hover {
     background-color: #0b2f50;
 }
 
-/* Mensagens */
+/* Mensagens de validação. */
 .mensagem {
     min-height: 24px;
     margin-top: 16px;
@@ -117,7 +115,7 @@ button:hover {
     color: #b91c1c;
 }
 
-/* Títulos */
+/* Cabeçalho da seção e contador. */
 .titulo-secao {
     display: flex;
     align-items: center;
@@ -125,7 +123,7 @@ button:hover {
     gap: 16px;
 }
 
-/* Tabela */
+/* Permite rolagem horizontal em telas pequenas. */
 .tabela-responsiva {
     overflow-x: auto;
 }
@@ -151,7 +149,7 @@ tbody tr:nth-child(even) {
     background-color: #f8fafc;
 }
 
-/* Exibição JSON */
+/* Área de exibição do JSON. */
 pre {
     max-height: 350px;
     margin: 0;
@@ -163,7 +161,7 @@ pre {
     line-height: 1.5;
 }
 
-/* Responsividade */
+/* Ajustes para telas pequenas. */
 @media (max-width: 600px) {
     .cartao {
         padding: 18px;
@@ -173,4 +171,25 @@ pre {
         align-items: flex-start;
         flex-direction: column;
     }
+}
+
+
+/*
+ * Organiza os botões do formulário.
+ */
+.acoes-formulario {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+/*
+ * Aparência do botão secundário.
+ */
+.botao-secundario {
+    background-color: #64748b;
+}
+
+.botao-secundario:hover {
+    background-color: #475569;
 }
