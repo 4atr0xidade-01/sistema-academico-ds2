@@ -1,122 +1,183 @@
+
 /*
- * CONTROLLER DE ALUNOS - VERSÃO 0.3
+ * CONTROLLER DE ALUNOS - VERSÃO 1.1
  *
- * O Controller agora utiliza o Service.
+ * O Controller coordena:
  *
- * Ele não acessa diretamente:
- * - o array;
- * - o localStorage;
- * - o Model.
+ * - Model;
+ * - View;
+ * - Service.
  */
+
 const AlunoController = {
 
-    iniciar() {
-        /*
-         * Inicializa as referências da View.
-         */
-        AlunoView.inicializar();
+    /*
+     * Inicializa a aplicação.
+     *
+     * A função é assíncrona porque, ao abrir a página,
+     * consultaremos os alunos no backend.
+     */
+    async iniciar() {
 
         /*
-         * Configura o cadastro.
+         * Localiza os elementos HTML.
+         */
+        AlunoView.iniciar();
+
+        /*
+         * Configura o evento de envio do formulário.
          */
         AlunoView.configurarFormulario(
-            function (dados) {
-                AlunoController.cadastrar(dados);
-            }
+            AlunoController.cadastrar
         );
 
         /*
-         * Configura o botão de limpeza.
+         * Informa que os dados estão sendo carregados.
          */
-        AlunoView.configurarBotaoLimpar(
-            function () {
-                AlunoController.limparDados();
-            }
+        AlunoView.exibirMensagem(
+            "Carregando alunos...",
+            "informacao"
         );
 
-        /*
-         * Carrega e apresenta os dados já armazenados.
-         *
-         * Isso faz os alunos voltarem para a tabela
-         * depois que a página for atualizada.
-         */
-        AlunoController.atualizarVisualizacao();
-    },
+        try {
 
-    /*
-     * Coordena o cadastro.
-     */
-    cadastrar(dados) {
-        const resultado = AlunoService.cadastrar(dados);
+            /*
+             * Consulta os alunos existentes no servidor.
+             */
+            await AlunoController.atualizarVisualizacao();
 
-        if (!resultado.sucesso) {
-            AlunoView.exibirErro(resultado.mensagem);
-            return;
+            AlunoView.exibirMensagem(
+                "Dados carregados com sucesso.",
+                "sucesso"
+            );
+
+        } catch (erro) {
+
+            AlunoView.exibirMensagem(
+                erro.message,
+                "erro"
+            );
         }
-
-        AlunoView.exibirSucesso(
-            `Aluno ${resultado.aluno.nome} cadastrado com sucesso.`
-        );
-
-        AlunoView.limparFormulario();
-        AlunoController.atualizarVisualizacao();
     },
 
     /*
-     * Coordena a remoção de todos os dados.
+     * Executa o cadastro do aluno.
      */
-    limparDados() {
-        const alunos = AlunoService.listar();
+    async cadastrar(evento) {
 
         /*
-         * Evita solicitar confirmação quando
-         * a lista já estiver vazia.
+         * Evita o recarregamento da página.
          */
-        if (alunos.length === 0) {
-            AlunoView.exibirErro(
-                "Não existem alunos para remover."
+        evento.preventDefault();
+
+        /*
+         * Solicita à View os valores do formulário.
+         */
+        const dadosInformados = AlunoView.lerDados();
+
+        /*
+         * Encaminha os dados para a validação inicial.
+         */
+        const validacao = AlunoModel.validar(
+            dadosInformados
+        );
+
+        /*
+         * Interrompe o processo caso a validação
+         * do frontend encontre um problema.
+         */
+        if (!validacao.sucesso) {
+
+            AlunoView.exibirMensagem(
+                validacao.mensagem,
+                "erro"
             );
 
             return;
         }
 
         /*
-         * Solicita confirmação à View.
+         * Desabilita temporariamente o botão.
          */
-        const confirmou = AlunoView.confirmarLimpeza();
+        AlunoView.alterarEstadoFormulario(true);
 
-        if (!confirmou) {
-            return;
-        }
-
-        /*
-         * Solicita que o Service remova os dados.
-         */
-        AlunoService.limpar();
-
-        AlunoView.exibirSucesso(
-            "Todos os alunos foram removidos."
+        AlunoView.exibirMensagem(
+            "Enviando dados para o servidor...",
+            "informacao"
         );
 
-        AlunoController.atualizarVisualizacao();
+        try {
+
+            /*
+             * Envia o aluno para o backend.
+             */
+            const resultado =
+                await AlunoService.cadastrar(
+                    validacao.dados
+                );
+
+            /*
+             * Consulta novamente a lista do servidor.
+             */
+            await AlunoController.atualizarVisualizacao();
+
+            /*
+             * Limpa o formulário depois do sucesso.
+             */
+            AlunoView.limparFormulario();
+
+            /*
+             * Apresenta a mensagem devolvida pela API.
+             */
+            AlunoView.exibirMensagem(
+                resultado.mensagem,
+                "sucesso"
+            );
+
+        } catch (erro) {
+
+            /*
+             * Apresenta erros de validação da API,
+             * RA duplicado ou falha de conexão.
+             */
+            AlunoView.exibirMensagem(
+                erro.message,
+                "erro"
+            );
+
+        } finally {
+
+            /*
+             * O bloco finally sempre será executado,
+             * independentemente do sucesso ou do erro.
+             */
+            AlunoView.alterarEstadoFormulario(false);
+        }
     },
 
     /*
-     * Recupera os dados e atualiza a interface.
+     * Consulta os alunos na API e atualiza a View.
      */
-    atualizarVisualizacao() {
-        const alunos = AlunoService.listar();
+    async atualizarVisualizacao() {
 
+        /*
+         * Aguarda o Service consultar o backend.
+         */
+        const alunos = await AlunoService.listar();
+
+        /*
+         * Atualiza a tabela.
+         */
         AlunoView.exibirLista(alunos);
 
-        const textoJson = JSON.stringify(
-            alunos,
-            null,
-            2
-        );
-
-        AlunoView.exibirJson(textoJson);
+        /*
+         * Atualiza a apresentação em JSON.
+         */
+        AlunoView.exibirJson(alunos);
     }
 };
 
+/*
+ * Inicia a aplicação.
+ */
 AlunoController.iniciar();

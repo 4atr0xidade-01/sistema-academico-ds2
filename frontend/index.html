@@ -9,7 +9,7 @@
 
     <!-- Ordem dos scripts: Model, Service, View e Controller. -->
     <script src="./js/model/aluno-model.js" defer></script>
-    <!-- O Service coordena o Model e a persistência em localStorage. -->
+   <!-- O Service realiza a comunicação com a API utilizando fetch(). -->
     <script src="./js/service/aluno-service.js" defer></script>
     <script src="./js/view/aluno-view.js" defer></script>
     <script src="./js/controller/aluno-controller.js" defer></script>
@@ -57,14 +57,17 @@
                     </div>
                 </div>
 
-                <!-- Ações do formulário: cadastrar e limpar os dados armazenados. -->
-                <div class="acoes-formulario">
-                    <button type="submit">Cadastrar aluno</button>
-                    <button
-                        type="button"
-                        id="btn-limpar-dados"
-                        class="botao-secundario"
-                    >Limpar dados</button>
+                
+                    <!-- Ações do formulário: cadastrar aluno na API. -->
+                    <div class="acoes-formulario">
+                        <button
+                            id="botao-salvar"
+                            type="submit">
+                            Cadastrar aluno
+                        </button>
+                    </div>
+
+
                 </div>
             </form>
 
