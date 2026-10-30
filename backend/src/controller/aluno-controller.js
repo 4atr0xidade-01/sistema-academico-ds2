@@ -1,85 +1,96 @@
+
 /*
- * Importa o Model responsável pelo armazenamento
- * temporário e pelas regras dos alunos.
+ * CONTROLLER DE ALUNOS - VERSÃO 1.2
+ *
+ * O Controller recebe as requisições encaminhadas
+ * pelo Router, chama o Model e produz a resposta.
+ */
+
+/*
+ * Importa o Model responsável pelos dados
+ * e pelas regras de negócio dos alunos.
  */
 import AlunoModel from "../model/aluno-model.js";
 
-/*
- * Importa as funções auxiliares para ler requisições
- * e responder ao cliente no formato JSON.
- */
-import { enviarJson, lerCorpoJson } from "../utils/http.js";
-
-/*
- * CONTROLLER DE ALUNOS - BACKEND, VERSÃO 1.0
- *
- * A rota chama o Controller; o Controller conversa
- * com o Model e organiza a resposta HTTP.
- *
- * Ele NÃO precisa saber como os alunos são armazenados.
- */
 const AlunoController = {
+
     /*
+     * LISTAR TODOS OS ALUNOS
+     *
+     * Endpoint:
      * GET /api/alunos
-     * Solicita a lista ao Model e devolve status 200.
      */
     listar(req, res) {
+
+        /*
+         * Solicita a lista de alunos ao Model.
+         */
         const alunos = AlunoModel.listar();
 
-        enviarJson(res, 200, {
+        /*
+         * Envia uma resposta com status 200.
+         *
+         * O Express transforma automaticamente
+         * o objeto JavaScript em JSON.
+         */
+        return res.status(200).json({
             total: alunos.length,
             dados: alunos
         });
     },
 
     /*
+     * CADASTRAR UM ALUNO
+     *
+     * Endpoint:
      * POST /api/alunos
-     * async indica que aguardamos uma operação assíncrona.
      */
-    async cadastrar(req, res) {
-        try {
-            /*
-             * Lê o corpo recebido por HTTP e converte
-             * a string JSON em um objeto JavaScript.
-             */
-            const dados = await lerCorpoJson(req);
+    cadastrar(req, res) {
 
-            // Delega ao Model a validação e o cadastro.
-            const resultado = AlunoModel.cadastrar(dados);
+        /*
+         * O middleware express.json() já converteu
+         * o JSON recebido em um objeto JavaScript.
+         *
+         * Os dados ficam disponíveis em req.body.
+         */
+        const dados = req.body;
+
+        /*
+         * Encaminha os dados para o Model,
+         * que executa as regras de validação
+         * e tenta cadastrar o aluno.
+         */
+        const resultado = AlunoModel.cadastrar(dados);
+
+        /*
+         * Verifica se o Model encontrou
+         * algum problema durante o cadastro.
+         */
+        if (!resultado.sucesso) {
 
             /*
-             * Se a validação falhou, devolve a mensagem
-             * com o código fornecido pelo Model.
+             * Retorna o status informado pelo Model,
+             * junto com a mensagem de erro.
              */
-            if (!resultado.sucesso) {
-                enviarJson(res, resultado.status, {
-                    sucesso: false,
-                    mensagem: resultado.mensagem
-                });
-                return;
-            }
-
-            /*
-             * 201 = Created.
-             * Inclui o aluno cadastrado em dados.
-             */
-            enviarJson(res, resultado.status, {
-                sucesso: true,
-                mensagem: "Aluno cadastrado com sucesso.",
-                dados: resultado.aluno
-            });
-        } catch (erro) {
-            /*
-             * Nesta versão, esse bloco trata principalmente
-             * requisições que contêm JSON inválido.
-             */
-            enviarJson(res, 400, {
+            return res.status(resultado.status).json({
                 sucesso: false,
-                mensagem: "O corpo da requisição contém um JSON inválido."
+                mensagem: resultado.mensagem
             });
         }
+
+        /*
+         * Se o cadastro funcionar, retorna 201,
+         * indicando que o recurso foi criado.
+         */
+        return res.status(201).json({
+            sucesso: true,
+            mensagem: "Aluno cadastrado com sucesso.",
+            dados: resultado.aluno
+        });
     }
 };
 
-// Permite que o arquivo de rotas utilize este Controller.
+/*
+ * Exporta o Controller para o Router.
+ */
 export default AlunoController;
