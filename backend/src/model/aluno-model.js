@@ -1,90 +1,140 @@
-/*
- * MODEL DE ALUNOS - BACKEND, VERSÃO 1.0
- *
- * Este array representa temporariamente o armazenamento.
- * Ele fica na memória do processo do servidor Node.js.
- * Quando o servidor é encerrado, os cadastros são perdidos.
- * Em versões futuras, utilizaremos um banco de dados MySQL.
- */
-const alunos = [];
 
 /*
- * O Model representa os dados e suas regras de negócio.
+ * MODEL DE ALUNOS - BACKEND, VERSÃO 1.3
  *
- * Responsabilidades:
- * - normalizar o texto recebido;
- * - validar os campos e o e-mail;
- * - verificar RA duplicado;
- * - gerar um ID;
- * - cadastrar e listar alunos.
+ * O Model concentra os dados e as regras
+ * relacionadas aos alunos.
+ *
+ * Nesta versão, acrescentamos:
+ * - busca por ID;
+ * - atualização de alunos;
+ * - exclusão de alunos;
+ * - validação reutilizada no cadastro e atualização.
  */
+
+const alunos = [];
+
 const AlunoModel = {
+
     /*
-     * Evita espaços extras e erros quando o valor vem
-     * como null ou undefined.
+     * Converte um valor para texto e remove
+     * os espaços do início e do final.
      */
     normalizarTexto(valor) {
         if (valor === null || valor === undefined) {
             return "";
         }
 
-        // String() converte para texto; trim() remove espaços nas pontas.
         return String(valor).trim();
     },
 
     /*
-     * Verifica um formato básico de e-mail.
-     * Esta validação será melhorada em versões futuras.
+     * Realiza uma validação inicial do e-mail.
      */
     validarEmail(email) {
         return email.includes("@") && email.includes(".");
     },
 
     /*
-     * find() procura o primeiro aluno com o RA informado.
-     * Se não encontrar, devolve undefined.
+     * Converte um ID para número.
+     *
+     * Retorna null quando o valor não representa
+     * um número inteiro positivo.
      */
-    localizarPorRa(ra) {
-        return alunos.find(aluno => aluno.ra === ra);
+    converterId(id) {
+        const idNumerico = Number(id);
+
+        if (
+            !Number.isInteger(idNumerico) ||
+            idNumerico <= 0
+        ) {
+            return null;
+        }
+
+        return idNumerico;
     },
 
     /*
-     * Gera o próximo identificador a partir do maior ID.
-     * Sem alunos cadastrados, o primeiro ID será 1.
+     * Localiza a posição de um aluno no array
+     * utilizando seu ID.
+     *
+     * findIndex() devolve -1 quando não encontra.
+     */
+    localizarIndicePorId(id) {
+        const idNumerico = AlunoModel.converterId(id);
+
+        if (idNumerico === null) {
+            return -1;
+        }
+
+        return alunos.findIndex(
+            aluno => aluno.id === idNumerico
+        );
+    },
+
+    /*
+     * Procura um aluno pelo RA.
+     *
+     * O parâmetro idIgnorado será utilizado
+     * durante a atualização.
+     *
+     * Ele evita que o RA do próprio aluno
+     * seja considerado duplicado.
+     */
+    localizarPorRa(ra, idIgnorado = null) {
+        return alunos.find(
+            aluno =>
+                aluno.ra === ra &&
+                aluno.id !== idIgnorado
+        );
+    },
+
+    /*
+     * Gera o próximo identificador.
      */
     gerarProximoId() {
         if (alunos.length === 0) {
             return 1;
         }
 
-        // map() cria um array apenas com os IDs.
         const ids = alunos.map(aluno => aluno.id);
-
-        // Math.max() encontra o maior; ... espalha os itens como argumentos.
         const maiorId = Math.max(...ids);
 
         return maiorId + 1;
     },
 
     /*
-     * Cadastra um aluno.
-     * Espera um objeto com ra, nome, email, curso e turma.
-     * O operador ?. evita erro se dados não tiver sido enviado.
+     * Normaliza e valida os dados recebidos.
+     *
+     * Esse método será utilizado tanto no cadastro
+     * quanto na atualização.
      */
-    cadastrar(dados) {
-        const ra = AlunoModel.normalizarTexto(dados?.ra);
-        const nome = AlunoModel.normalizarTexto(dados?.nome);
-        const email = AlunoModel.normalizarTexto(dados?.email);
-        const curso = AlunoModel.normalizarTexto(dados?.curso);
-        const turma = AlunoModel.normalizarTexto(dados?.turma);
+    validarDados(dados, idIgnorado = null) {
 
-        /* Todos os campos são obrigatórios. */
+        /*
+         * Normaliza os valores recebidos.
+         */
+        const alunoValidado = {
+            ra: AlunoModel.normalizarTexto(dados?.ra),
+            nome: AlunoModel.normalizarTexto(dados?.nome),
+
+            email: AlunoModel
+                .normalizarTexto(dados?.email)
+                .toLowerCase(),
+
+            curso: AlunoModel.normalizarTexto(dados?.curso),
+            turma: AlunoModel.normalizarTexto(dados?.turma)
+        };
+
+        /*
+         * Verifica os campos obrigatórios.
+         */
         if (
-            ra === "" ||
-            nome === "" ||
-            email === "" ||
-            curso === "" ||
-            turma === ""
+            alunoValidado.ra === "" ||
+            alunoValidado.nome === "" ||
+            alunoValidado.email === "" ||
+            alunoValidado.curso === "" ||
+            alunoValidado.turma === ""
         ) {
             return {
                 sucesso: false,
@@ -93,8 +143,10 @@ const AlunoModel = {
             };
         }
 
-        /* Verifica o formato básico do e-mail. */
-        if (!AlunoModel.validarEmail(email)) {
+        /*
+         * Verifica o formato inicial do e-mail.
+         */
+        if (!AlunoModel.validarEmail(alunoValidado.email)) {
             return {
                 sucesso: false,
                 status: 400,
@@ -102,8 +154,15 @@ const AlunoModel = {
             };
         }
 
-        /* O mesmo RA não pode ser cadastrado duas vezes. */
-        if (AlunoModel.localizarPorRa(ra)) {
+        /*
+         * Verifica a duplicidade do RA.
+         */
+        if (
+            AlunoModel.localizarPorRa(
+                alunoValidado.ra,
+                idIgnorado
+            )
+        ) {
             return {
                 sucesso: false,
                 status: 409,
@@ -112,38 +171,203 @@ const AlunoModel = {
         }
 
         /*
-         * Cria o objeto que representa o aluno.
-         * O ID é calculado no Model e ativo começa como true.
+         * Retorna os dados normalizados.
+         */
+        return {
+            sucesso: true,
+            dados: alunoValidado
+        };
+    },
+
+    /*
+     * Cadastra um novo aluno.
+     */
+    cadastrar(dados) {
+
+        /*
+         * Valida os dados recebidos.
+         */
+        const validacao = AlunoModel.validarDados(dados);
+
+        /*
+         * Retorna o erro encontrado pelo Model.
+         */
+        if (!validacao.sucesso) {
+            return validacao;
+        }
+
+        /*
+         * Cria o novo aluno.
+         *
+         * O operador ... espalha as propriedades
+         * dos dados validados.
          */
         const aluno = {
             id: AlunoModel.gerarProximoId(),
-            ra,
-            nome,
-            email,
-            curso,
-            turma,
+
+            ...validacao.dados,
+
             ativo: true
         };
 
-        // Armazena o novo aluno no array em memória.
+        /*
+         * Adiciona o aluno ao array.
+         */
         alunos.push(aluno);
 
-        // 201 significa que um novo recurso foi criado.
         return {
             sucesso: true,
             status: 201,
-            aluno
+
+            /*
+             * Retorna uma cópia do aluno.
+             */
+            aluno: { ...aluno }
         };
     },
 
     /*
      * Lista todos os alunos.
-     * O operador ... cria uma cópia superficial do array.
      */
     listar() {
-        return [...alunos];
+
+        /*
+         * map() cria um novo array.
+         *
+         * Também criamos uma cópia de cada aluno.
+         */
+        return alunos.map(
+            aluno => ({ ...aluno })
+        );
+    },
+
+    /*
+     * Busca um aluno pelo ID.
+     */
+    buscarPorId(id) {
+
+        /*
+         * Localiza a posição do aluno.
+         */
+        const indice =
+            AlunoModel.localizarIndicePorId(id);
+
+        /*
+         * O índice -1 indica que o aluno
+         * não foi encontrado.
+         */
+        if (indice === -1) {
+            return {
+                sucesso: false,
+                status: 404,
+                mensagem: "Aluno não encontrado."
+            };
+        }
+
+        return {
+            sucesso: true,
+            status: 200,
+            aluno: { ...alunos[indice] }
+        };
+    },
+
+    /*
+     * Atualiza os dados de um aluno.
+     */
+    atualizar(id, dados) {
+
+        /*
+         * Localiza o aluno que será atualizado.
+         */
+        const indice =
+            AlunoModel.localizarIndicePorId(id);
+
+        if (indice === -1) {
+            return {
+                sucesso: false,
+                status: 404,
+                mensagem: "Aluno não encontrado."
+            };
+        }
+
+        /*
+         * Recupera o aluno armazenado no array.
+         */
+        const alunoAtual = alunos[indice];
+
+        /*
+         * Valida os novos dados.
+         *
+         * O ID atual é ignorado na verificação
+         * de RA duplicado.
+         */
+        const validacao = AlunoModel.validarDados(
+            dados,
+            alunoAtual.id
+        );
+
+        if (!validacao.sucesso) {
+            return validacao;
+        }
+
+        /*
+         * Atualiza somente os campos editáveis.
+         *
+         * O ID e a situação do aluno são preservados.
+         */
+        alunos[indice] = {
+            ...alunoAtual,
+            ...validacao.dados
+        };
+
+        return {
+            sucesso: true,
+            status: 200,
+            aluno: { ...alunos[indice] }
+        };
+    },
+
+    /*
+     * Exclui um aluno pelo ID.
+     */
+    remover(id) {
+
+        /*
+         * Localiza a posição do aluno.
+         */
+        const indice =
+            AlunoModel.localizarIndicePorId(id);
+
+        if (indice === -1) {
+            return {
+                sucesso: false,
+                status: 404,
+                mensagem: "Aluno não encontrado."
+            };
+        }
+
+        /*
+         * splice() remove um elemento do array.
+         *
+         * O primeiro argumento é a posição.
+         * O segundo é a quantidade removida.
+         */
+        const removidos = alunos.splice(indice, 1);
+
+        /*
+         * Recupera o primeiro elemento removido.
+         */
+        const alunoRemovido = removidos[0];
+
+        return {
+            sucesso: true,
+            status: 200,
+            aluno: { ...alunoRemovido }
+        };
     }
 };
 
-// Permite que o Controller importe este Model.
+/*
+ * Exporta o Model.
+ */
 export default AlunoModel;
