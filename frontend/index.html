@@ -58,14 +58,40 @@
                 </div>
 
                 
-                    <!-- Ações do formulário: cadastrar aluno na API. -->
-                    <div class="acoes-formulario">
-                        <button
-                            id="botao-salvar"
-                            type="submit">
-                            Cadastrar aluno
-                        </button>
-                    </div>
+<!-- Agrupa os botões utilizados pelo formulário. -->
+<div class="acoes-formulario">
+
+    <!--
+        Envia o formulário.
+
+        O texto será modificado pela View:
+        - Cadastrar aluno;
+        - Atualizar aluno;
+        - Salvando...;
+        - Atualizando...
+    -->
+    <button
+        id="botao-salvar"
+        type="submit">
+        Cadastrar aluno
+    </button>
+
+    <!--
+        Cancela uma edição e devolve o formulário
+        para o modo de cadastro.
+
+        O atributo hidden mantém o botão escondido
+        enquanto nenhum aluno estiver em edição.
+    -->
+    <button
+        id="botao-cancelar"
+        class="botao-secundario"
+        type="button"
+        hidden>
+        Cancelar edição
+    </button>
+
+</div>
 
 
                 </div>
@@ -92,6 +118,7 @@
                             <th>Curso</th>
                             <th>Turma</th>
                             <th>Situação</th>
+                            <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody id="corpo-tabela-alunos"></tbody>

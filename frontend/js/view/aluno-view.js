@@ -1,27 +1,23 @@
-/*
- * VIEW DE ALUNOS - VERSÃO 1.1
- *
- * A View é responsável pela interface.
- *
- * Ela lê o formulário, apresenta mensagens,
- * atualiza a tabela e exibe o JSON.
- */
 
+/*
+ * A View manipula os elementos da interface.
+ */
 const AlunoView = {
 
     /*
-     * Armazena referências aos elementos HTML.
+     * Armazena as referências aos elementos HTML.
      */
     elementos: {},
 
     /*
+     * Indica se o formulário está em modo de edição.
+     */
+    modoEdicao: false,
+
+    /*
      * Localiza os elementos da página.
-     *
-     * Este método deve ser executado somente
-     * depois que o HTML estiver carregado.
      */
     iniciar() {
-
         AlunoView.elementos.formulario =
             document.querySelector("#form-aluno");
 
@@ -53,30 +49,74 @@ const AlunoView = {
             document.querySelector("#botao-salvar");
 
         /*
-         * Mantém atualizado o contador
-         * que já existia na versão anterior.
+         * Novo botão da versão 1.4.
          */
-        AlunoView.elementos.totalAlunos =
-            document.querySelector("#total-alunos");
+        AlunoView.elementos.botaoCancelar =
+            document.querySelector("#botao-cancelar");
     },
 
     /*
-     * Registra a função que será executada
-     * quando o formulário for enviado.
+     * Configura o envio do formulário.
      */
     configurarFormulario(aoEnviar) {
-
-        AlunoView.elementos.formulario.addEventListener(
-            "submit",
-            aoEnviar
-        );
+        AlunoView.elementos.formulario
+            .addEventListener("submit", aoEnviar);
     },
 
     /*
-     * Lê os valores digitados no formulário.
+     * Configura o botão de cancelamento.
+     */
+    configurarBotaoCancelar(aoCancelar) {
+        AlunoView.elementos.botaoCancelar
+            .addEventListener("click", aoCancelar);
+    },
+
+    /*
+     * Configura os botões de editar e excluir.
+     *
+     * Utilizamos um único evento no corpo da tabela.
+     */
+    configurarAcoesTabela(aoEditar, aoExcluir) {
+        AlunoView.elementos.corpoTabela
+            .addEventListener("click", evento => {
+
+                /*
+                 * closest() procura o botão clicado.
+                 */
+                const botao = evento.target.closest(
+                    "button[data-acao]"
+                );
+
+                /*
+                 * Se o clique não ocorreu em um botão
+                 * de ação, encerramos a função.
+                 */
+                if (!botao) {
+                    return;
+                }
+
+                /*
+                 * Recupera os valores armazenados
+                 * nos atributos data-* do botão.
+                 */
+                const acao = botao.dataset.acao;
+                const id = Number(botao.dataset.id);
+
+                if (acao === "editar") {
+                    aoEditar(id);
+                    return;
+                }
+
+                if (acao === "excluir") {
+                    aoExcluir(id);
+                }
+            });
+    },
+
+    /*
+     * Lê os campos do formulário.
      */
     lerDados() {
-
         return {
             ra: AlunoView.elementos.ra.value,
             nome: AlunoView.elementos.nome.value,
@@ -87,16 +127,21 @@ const AlunoView = {
     },
 
     /*
-     * Apresenta uma mensagem na interface.
-     *
-     * O tipo pode ser:
-     *
-     * - sucesso;
-     * - erro;
-     * - informacao.
+     * Preenche o formulário com um aluno
+     * recebido da API.
+     */
+    preencherFormulario(aluno) {
+        AlunoView.elementos.ra.value = aluno.ra;
+        AlunoView.elementos.nome.value = aluno.nome;
+        AlunoView.elementos.email.value = aluno.email;
+        AlunoView.elementos.curso.value = aluno.curso;
+        AlunoView.elementos.turma.value = aluno.turma;
+    },
+
+    /*
+     * Apresenta uma mensagem na página.
      */
     exibirMensagem(mensagem, tipo) {
-
         AlunoView.elementos.mensagem.textContent =
             mensagem;
 
@@ -106,12 +151,8 @@ const AlunoView = {
 
     /*
      * Cria uma célula da tabela.
-     *
-     * textContent é utilizado para inserir o texto
-     * de forma segura, sem interpretá-lo como HTML.
      */
     criarCelula(valor) {
-
         const celula = document.createElement("td");
 
         celula.textContent = valor;
@@ -120,51 +161,60 @@ const AlunoView = {
     },
 
     /*
-     * Exibe a lista de alunos na tabela.
+     * Cria um botão de ação.
+     */
+    criarBotao(texto, classe, acao, id) {
+        const botao = document.createElement("button");
+
+        /*
+         * Evita que o botão tente enviar
+         * algum formulário.
+         */
+        botao.type = "button";
+
+        botao.textContent = texto;
+        botao.className = classe;
+
+        /*
+         * Os atributos data-* armazenam informações
+         * no próprio elemento HTML.
+         */
+        botao.dataset.acao = acao;
+        botao.dataset.id = id;
+
+        return botao;
+    },
+
+    /*
+     * Exibe a lista de alunos.
      */
     exibirLista(alunos) {
 
         /*
-         * Remove as linhas exibidas anteriormente.
+         * Limpa as linhas anteriores.
          */
         AlunoView.elementos.corpoTabela.innerHTML = "";
 
-        /*
-         * Atualiza a quantidade de alunos.
-         */
-        if (AlunoView.elementos.totalAlunos) {
-            AlunoView.elementos.totalAlunos.textContent =
-                `Total: ${alunos.length}`;
-        }
-
-        /*
-         * Se o array estiver vazio, cria uma linha
-         * informando que não existem alunos.
-         */
         if (alunos.length === 0) {
-
             const linha = document.createElement("tr");
             const celula = document.createElement("td");
 
-            celula.colSpan = 7;
-
+            /*
+             * Agora a tabela possui oito colunas.
+             */
+            celula.colSpan = 8;
             celula.textContent =
                 "Nenhum aluno foi cadastrado.";
 
             linha.appendChild(celula);
 
-            AlunoView.elementos.corpoTabela.appendChild(
-                linha
-            );
+            AlunoView.elementos.corpoTabela
+                .appendChild(linha);
 
             return;
         }
 
-        /*
-         * Cria uma linha para cada aluno recebido.
-         */
         alunos.forEach(aluno => {
-
             const linha = document.createElement("tr");
 
             linha.appendChild(
@@ -197,51 +247,130 @@ const AlunoView = {
                 )
             );
 
-            AlunoView.elementos.corpoTabela.appendChild(
-                linha
-            );
+            /*
+             * Cria a célula das ações.
+             */
+            const celulaAcoes =
+                document.createElement("td");
+
+            celulaAcoes.className = "acoes-tabela";
+
+            /*
+             * Botão de edição.
+             */
+            const botaoEditar =
+                AlunoView.criarBotao(
+                    "Editar",
+                    "botao-editar",
+                    "editar",
+                    aluno.id
+                );
+
+            /*
+             * Botão de exclusão.
+             */
+            const botaoExcluir =
+                AlunoView.criarBotao(
+                    "Excluir",
+                    "botao-excluir",
+                    "excluir",
+                    aluno.id
+                );
+
+            celulaAcoes.appendChild(botaoEditar);
+            celulaAcoes.appendChild(botaoExcluir);
+
+            linha.appendChild(celulaAcoes);
+
+            AlunoView.elementos.corpoTabela
+                .appendChild(linha);
         });
     },
 
     /*
-     * Exibe os alunos no formato JSON.
+     * Exibe os dados no formato JSON.
      */
     exibirJson(alunos) {
-
         AlunoView.elementos.saidaJson.textContent =
             JSON.stringify(alunos, null, 2);
     },
 
     /*
-     * Limpa os campos depois de um cadastro.
+     * Altera o formulário entre:
+     *
+     * - modo de cadastro;
+     * - modo de edição.
      */
-    limparFormulario() {
-
-        AlunoView.elementos.formulario.reset();
+    alterarModoEdicao(editando) {
+        AlunoView.modoEdicao = editando;
 
         /*
-         * Devolve o foco para o campo RA.
+         * Mostra ou esconde o botão de cancelamento.
          */
+        AlunoView.elementos.botaoCancelar.hidden =
+            !editando;
+
+        /*
+         * Altera o texto do botão principal.
+         */
+        AlunoView.elementos.botaoSalvar.textContent =
+            editando
+                ? "Atualizar aluno"
+                : "Cadastrar aluno";
+    },
+
+    /*
+     * Altera o estado enquanto uma requisição
+     * estiver sendo processada.
+     */
+    alterarEstadoFormulario(processando) {
+        AlunoView.elementos.botaoSalvar.disabled =
+            processando;
+
+        AlunoView.elementos.botaoCancelar.disabled =
+            processando;
+
+        if (processando) {
+            AlunoView.elementos.botaoSalvar.textContent =
+                AlunoView.modoEdicao
+                    ? "Atualizando..."
+                    : "Salvando...";
+
+            return;
+        }
+
+        AlunoView.elementos.botaoSalvar.textContent =
+            AlunoView.modoEdicao
+                ? "Atualizar aluno"
+                : "Cadastrar aluno";
+    },
+
+    /*
+     * Limpa o formulário.
+     */
+    limparFormulario() {
+        AlunoView.elementos.formulario.reset();
         AlunoView.elementos.ra.focus();
     },
 
     /*
-     * Altera o estado do formulário durante
-     * uma operação assíncrona.
+     * Solicita a confirmação antes da exclusão.
      */
-    alterarEstadoFormulario(processando) {
+    confirmarExclusao() {
+        return confirm(
+            "Deseja realmente excluir este aluno?"
+        );
+    },
 
-        /*
-         * Impede vários envios enquanto a requisição
-         * estiver em andamento.
-         */
-        AlunoView.elementos.botaoSalvar.disabled =
-            processando;
+    /*
+     * Leva a página até o formulário.
+     */
+    irParaFormulario() {
+        AlunoView.elementos.formulario.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
 
-        /*
-         * Modifica o texto apresentado no botão.
-         */
-        AlunoView.elementos.botaoSalvar.textContent =
-            processando ? "Salvando..." : "Cadastrar aluno";
+        AlunoView.elementos.ra.focus();
     }
 };

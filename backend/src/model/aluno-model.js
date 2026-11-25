@@ -1,15 +1,10 @@
 
 /*
- * MODEL DE ALUNOS - BACKEND, VERSÃO 1.3
- *
- * O Model concentra os dados e as regras
- * relacionadas aos alunos.
- *
- * Nesta versão, acrescentamos:
- * - busca por ID;
- * - atualização de alunos;
- * - exclusão de alunos;
- * - validação reutilizada no cadastro e atualização.
+ * Array utilizado temporariamente para armazenar
+ * os Alunos na memoria do servidor
+ * 
+ * Os Dados ainda serão perdidosquando o 
+ * servidor for encerrado
  */
 
 const alunos = [];
