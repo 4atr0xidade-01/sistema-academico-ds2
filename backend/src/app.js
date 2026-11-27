@@ -91,40 +91,48 @@ app.use((req, res) => {
 
 });
 
+
 /*
- * Middleware global de tratamento de erros.
+ * Middleware global para tratamento de erros.
+ *
+ * Possui quatro parâmetros:
+ * erro, req, res e next.
  */
 app.use((erro, req, res, next) => {
 
     /*
-     * Trata requisições contendo JSON inválido.
+     * Trata JSON inválido enviado na requisição.
      */
     if (erro.type === "entity.parse.failed") {
-
         return res.status(400).json({
             sucesso: false,
-            mensagem:
-                "O corpo da requisição contém um JSON inválido."
+            mensagem: "O corpo da requisição contém um JSON inválido."
         });
-
     }
 
     /*
-     * Registra erros inesperados no terminal.
+     * Proteção adicional para tentativa de inserir
+     * um RA duplicado no campo UNIQUE do MySQL.
+     */
+    if (erro.code === "ER_DUP_ENTRY") {
+        return res.status(409).json({
+            sucesso: false,
+            mensagem: "Já existe um aluno com esse RA."
+        });
+    }
+
+    /*
+     * Registra os detalhes do erro no terminal.
      */
     console.error("Erro interno do servidor:", erro);
 
     /*
-     * Retorna uma mensagem genérica ao cliente.
+     * Envia uma mensagem genérica ao cliente.
      */
     return res.status(500).json({
         sucesso: false,
         mensagem: "Erro interno do servidor."
     });
-
 });
 
-/*
- * Exporta a aplicação para o server.js.
- */
 export default app;

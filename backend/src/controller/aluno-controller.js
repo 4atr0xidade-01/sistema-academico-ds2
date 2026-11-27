@@ -1,190 +1,162 @@
 
 /*
- * Importa o Model de alunos.
+ * Importa o Service.
  */
-import AlunoModel from "../model/aluno-model.js";
+import AlunoService from "../service/aluno-service.js";
 
 /*
- * O Controller coordena as requisições,
- * chama o Model e produz as respostas.
+ * O Controller trabalha com HTTP.
  */
 const AlunoController = {
 
     /*
-     * Lista todos os alunos.
-     *
      * GET /api/alunos
      */
-    listar(req, res) {
+    async listar(req, res, next) {
 
-        const alunos = AlunoModel.listar();
+        try {
 
-        return res.status(200).json({
-            total: alunos.length,
-            dados: alunos
-        });
+            const alunos =
+                await AlunoService.listar();
+
+            return res.status(200).json({
+                total: alunos.length,
+                dados: alunos
+            });
+
+        } catch (erro) {
+            next(erro);
+        }
     },
 
     /*
-     * Consulta um aluno pelo ID.
-     *
      * GET /api/alunos/:id
      */
-    buscarPorId(req, res) {
+    async buscarPorId(req, res, next) {
 
-        /*
-         * Recupera o ID enviado na URL.
-         *
-         * req.params contém os parâmetros da rota.
-         */
-        const id = req.params.id;
+        try {
 
-        /*
-         * Solicita a consulta ao Model.
-         */
-        const resultado =
-            AlunoModel.buscarPorId(id);
+            const resultado =
+                await AlunoService.buscarPorId(
+                    req.params.id
+                );
 
-        /*
-         * Trata o aluno não encontrado.
-         */
-        if (!resultado.sucesso) {
-            return res
-                .status(resultado.status)
-                .json({
-                    sucesso: false,
-                    mensagem: resultado.mensagem
-                });
+            if (!resultado.sucesso) {
+                return res
+                    .status(resultado.status)
+                    .json({
+                        sucesso: false,
+                        mensagem: resultado.mensagem
+                    });
+            }
+
+            return res.status(200).json({
+                sucesso: true,
+                dados: resultado.aluno
+            });
+
+        } catch (erro) {
+            next(erro);
         }
-
-        /*
-         * Envia o aluno encontrado.
-         */
-        return res.status(200).json({
-            sucesso: true,
-            dados: resultado.aluno
-        });
     },
 
     /*
-     * Cadastra um aluno.
-     *
      * POST /api/alunos
      */
-    cadastrar(req, res) {
+    async cadastrar(req, res, next) {
 
-        /*
-         * O corpo JSON está disponível
-         * na propriedade req.body.
-         */
-        const dados = req.body;
+        try {
 
-        /*
-         * Solicita o cadastro ao Model.
-         */
-        const resultado =
-            AlunoModel.cadastrar(dados);
+            const resultado =
+                await AlunoService.cadastrar(req.body);
 
-        if (!resultado.sucesso) {
-            return res
-                .status(resultado.status)
-                .json({
-                    sucesso: false,
-                    mensagem: resultado.mensagem
-                });
+            if (!resultado.sucesso) {
+                return res
+                    .status(resultado.status)
+                    .json({
+                        sucesso: false,
+                        mensagem: resultado.mensagem
+                    });
+            }
+
+            return res.status(201).json({
+                sucesso: true,
+                mensagem: "Aluno cadastrado com sucesso.",
+                dados: resultado.aluno
+            });
+
+        } catch (erro) {
+            next(erro);
         }
-
-        /*
-         * Retorna 201 quando um recurso é criado.
-         */
-        return res.status(201).json({
-            sucesso: true,
-            mensagem: "Aluno cadastrado com sucesso.",
-            dados: resultado.aluno
-        });
     },
 
     /*
-     * Atualiza um aluno.
-     *
      * PUT /api/alunos/:id
      */
-    atualizar(req, res) {
+    async atualizar(req, res, next) {
 
-        /*
-         * O ID vem da URL.
-         */
-        const id = req.params.id;
+        try {
 
-        /*
-         * Os novos dados vêm do corpo JSON.
-         */
-        const dados = req.body;
+            const resultado =
+                await AlunoService.atualizar(
+                    req.params.id,
+                    req.body
+                );
 
-        /*
-         * Solicita a atualização ao Model.
-         */
-        const resultado =
-            AlunoModel.atualizar(id, dados);
+            if (!resultado.sucesso) {
+                return res
+                    .status(resultado.status)
+                    .json({
+                        sucesso: false,
+                        mensagem: resultado.mensagem
+                    });
+            }
 
-        if (!resultado.sucesso) {
-            return res
-                .status(resultado.status)
-                .json({
-                    sucesso: false,
-                    mensagem: resultado.mensagem
-                });
+            return res.status(200).json({
+                sucesso: true,
+                mensagem: "Aluno atualizado com sucesso.",
+                dados: resultado.aluno
+            });
+
+        } catch (erro) {
+            next(erro);
         }
-
-        /*
-         * Retorna a confirmação da atualização.
-         */
-        return res.status(200).json({
-            sucesso: true,
-            mensagem: "Aluno atualizado com sucesso.",
-            dados: resultado.aluno
-        });
     },
 
     /*
-     * Exclui um aluno.
-     *
      * DELETE /api/alunos/:id
      */
-    remover(req, res) {
+    async remover(req, res, next) {
 
-        /*
-         * Recupera o ID informado na URL.
-         */
-        const id = req.params.id;
+        try {
 
-        /*
-         * Solicita a exclusão ao Model.
-         */
-        const resultado =
-            AlunoModel.remover(id);
+            const resultado =
+                await AlunoService.remover(
+                    req.params.id
+                );
 
-        if (!resultado.sucesso) {
-            return res
-                .status(resultado.status)
-                .json({
-                    sucesso: false,
-                    mensagem: resultado.mensagem
-                });
+            if (!resultado.sucesso) {
+                return res
+                    .status(resultado.status)
+                    .json({
+                        sucesso: false,
+                        mensagem: resultado.mensagem
+                    });
+            }
+
+            return res.status(200).json({
+                sucesso: true,
+                mensagem: "Aluno excluído com sucesso.",
+                dados: resultado.aluno
+            });
+
+        } catch (erro) {
+            next(erro);
         }
-
-        /*
-         * Retorna a confirmação da exclusão.
-         */
-        return res.status(200).json({
-            sucesso: true,
-            mensagem: "Aluno excluído com sucesso.",
-            dados: resultado.aluno
-        });
     }
 };
 
 /*
- * Exporta o Controller para utilização nas rotas.
+ * Exporta o Controller.
  */
 export default AlunoController;
